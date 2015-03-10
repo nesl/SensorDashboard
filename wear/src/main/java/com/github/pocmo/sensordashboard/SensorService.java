@@ -8,6 +8,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.concurrent.Executors;
@@ -46,6 +47,8 @@ public class SensorService extends Service implements SensorEventListener {
 
     private DeviceClient client;
 
+    private PowerManager.WakeLock wl;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -76,6 +79,12 @@ public class SensorService extends Service implements SensorEventListener {
 
     protected void startMeasurement() {
         Log.d(TAG, "start measurement in wear: SensorService");
+
+        // Wakelock
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wl = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SensorCollector");
+        wl.acquire();
+
         mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
 
         Sensor accelerometerSensor = mSensorManager.getDefaultSensor(SENS_ACCELEROMETER);
@@ -247,6 +256,7 @@ public class SensorService extends Service implements SensorEventListener {
     private void stopMeasurement() {
         if (mSensorManager != null)
             mSensorManager.unregisterListener(this);
+        wl.release();
     }
 
     @Override

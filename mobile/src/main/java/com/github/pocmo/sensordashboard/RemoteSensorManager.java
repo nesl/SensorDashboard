@@ -3,6 +3,7 @@ package com.github.pocmo.sensordashboard;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.media.browse.MediaBrowser;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -47,6 +48,7 @@ public class RemoteSensorManager {
     private SensorNames sensorNames;
     private GoogleApiClient googleApiClient;
     private GoogleApiClient googleApiActivityClient;
+    private ConnectionCallbacks cb;
 
     public static synchronized RemoteSensorManager getInstance(Context context) {
         if (instance == null) {
@@ -82,23 +84,25 @@ public class RemoteSensorManager {
                 .addApi(Wearable.API)
                 .build();
 
+        cb = new ConnectionCallbacks() {
+            @Override
+            public void onConnected(Bundle connectionHint) {
+                Log.d(TAG, "onConnected activity recognition");
+                Intent intent = new Intent(context, ActivityRecognitionService.class);
+                PendingIntent mPendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+                ActivityRecognition.ActivityRecognitionApi
+                        .requestActivityUpdates(googleApiActivityClient, 0, mPendingIntent);
+            }
+            @Override
+            public void onConnectionSuspended(int cause) {
+                Log.d(TAG, "onConnectionSuspended act: " + cause);
+            }
+        };
+
         this.googleApiActivityClient = new GoogleApiClient.Builder(context)
                 .addApi(ActivityRecognition.API)
-                .addConnectionCallbacks(new ConnectionCallbacks() {
-                    @Override
-                    public void onConnected(Bundle connectionHint) {
-                        Log.d(TAG, "onConnected activity recognition");
-                        Intent intent = new Intent(context, ActivityRecognitionService.class);
-                        PendingIntent mPendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-                        ActivityRecognition.ActivityRecognitionApi
-                                .requestActivityUpdates(googleApiActivityClient, 0, mPendingIntent);
-                    }
-                    @Override
-                    public void onConnectionSuspended(int cause) {
-                        Log.d(TAG, "onConnectionSuspended act: " + cause);
-                    }
-                })
+                .addConnectionCallbacks(cb)
                 .addOnConnectionFailedListener(new OnConnectionFailedListener() {
                     @Override
                     public void onConnectionFailed(ConnectionResult result) {
@@ -196,6 +200,7 @@ public class RemoteSensorManager {
                 controlMeasurementInBackground(ClientPaths.START_MEASUREMENT);
             }
         });
+
         googleApiActivityClient.connect();
     }
 
@@ -206,6 +211,7 @@ public class RemoteSensorManager {
                 controlMeasurementInBackground(ClientPaths.STOP_MEASUREMENT);
             }
         });
+        googleApiActivityClient.unregisterConnectionCallbacks(cb);
         googleApiActivityClient.disconnect();
     }
 
