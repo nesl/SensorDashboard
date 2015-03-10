@@ -75,6 +75,7 @@ public class SensorService extends Service implements SensorEventListener {
     }
 
     protected void startMeasurement() {
+        Log.d(TAG, "start measurement in wear: SensorService");
         mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
 
         Sensor accelerometerSensor = mSensorManager.getDefaultSensor(SENS_ACCELEROMETER);
