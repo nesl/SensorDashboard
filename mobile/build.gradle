@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.github.pocmo.sensordashboard"
-        minSdkVersion 18
+        minSdkVersion 19
         targetSdkVersion 21
         versionCode 3
         versionName "1.0.2"

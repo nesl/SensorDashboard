@@ -1,7 +1,9 @@
 package com.github.pocmo.sensordashboard;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.github.pocmo.sensordashboard.shared.DataMapKeys;
 import com.google.android.gms.wearable.DataEvent;
@@ -66,6 +68,19 @@ public class SensorReceiverService extends WearableListenerService {
         float[] values = dataMap.getFloatArray(DataMapKeys.VALUES);
 
         Log.d(TAG, "Received sensor data " + sensorType + " = " + Arrays.toString(values));
+
+        if (sensorType == 0) {
+            Toast.makeText(this, "empty sensor data received", Toast.LENGTH_SHORT).show();;
+        }
+        else {
+            Intent intent = new Intent();
+            intent.setAction("nesl.wear.sensordata");
+            intent.putExtra("t", sensorType);
+            intent.putExtra("ts", timestamp);
+            intent.putExtra("d",Arrays.toString(values));
+            this.sendBroadcast(intent);
+        }
+
 
         sensorManager.addSensorData(sensorType, accuracy, timestamp, values);
     }
