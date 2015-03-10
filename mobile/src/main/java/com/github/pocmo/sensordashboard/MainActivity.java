@@ -100,6 +100,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Keep the screen on
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         remoteSensorManager = RemoteSensorManager.getInstance(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_awesome_toolbar);
@@ -250,9 +253,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         sensorManager.unregisterListener(this);
         locationManager.removeUpdates(this);
 
-        // Release the wakelock
-        wl.release();
-
         // Unregister the boardcast receiver
         unregisterReceiver(updateUIReciver);
     }
@@ -274,6 +274,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             loggerAccWear.close();
             loggerGyroWear.close();
             loggerStepWear.close();
+
+            // Release the wakelock
+            wl.release();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
