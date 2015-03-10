@@ -37,6 +37,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private TextViewBuf textStorage;
 
+    private TextViewBuf textActivity;
     private TextViewBuf textGps;
     private TextViewBuf textAcc;
     private TextViewBuf textGyro;
@@ -59,6 +60,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 //    private TextViewBuf textGyroWearHz;
 
     private BufferedWriter loggerGps;
+    private BufferedWriter loggerActivity;
 
     private BufferedWriter loggerAcc;
     private BufferedWriter loggerGyro;
@@ -108,6 +110,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         String pathRoot = Environment.getExternalStorageDirectory() + "/wear_data/weardata_" + deviceNo + "_" + timeString.currentTimeForFile();
         try {
             loggerGps  = new BufferedWriter(new FileWriter(pathRoot + ".phone.gps"));
+            loggerActivity  = new BufferedWriter(new FileWriter(pathRoot + ".phone.activity"));
 
             loggerAcc  = new BufferedWriter(new FileWriter(pathRoot + ".phone.acc"));
             loggerGyro = new BufferedWriter(new FileWriter(pathRoot + ".phone.gyro"));
@@ -155,6 +158,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         // basic information
         TextViewBuf.createText(la, this, "File name: " + pathRoot + ".*");
         textStorage  = TextViewBuf.createText(la, this, "Storage: --");
+        TextViewBuf.createText(la, this, "");
+
+        // Google play service activity recognition
+        textActivity      = TextViewBuf.createText(la, this, "Detected Activity: ");
         TextViewBuf.createText(la, this, "");
 
         // GPS from phone
@@ -261,12 +268,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             loggerGyro.close();
             loggerStep.close();
             loggerGps.close();
+            loggerActivity.close();
 
             loggerHeartRateWear.close();
             loggerAccWear.close();
             loggerGyroWear.close();
             loggerStepWear.close();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -350,6 +357,13 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         try {
             if (wear) {
                 switch (sensorType) {
+                    case -2: {
+                        textActivity.setStr("Detected Activity: " + content);
+                        loggerActivity.write(timestamp + "," + content);
+                        loggerActivity.newLine();
+                        loggerActivity.flush();
+                    }
+                    break;
                     case Sensor.TYPE_ACCELEROMETER: {
                         // accCnt++;
                         textAccWear.setStr("ACC_WEAR " + content);
@@ -392,7 +406,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 switch (sensorType) {
                     case Sensor.TYPE_PRESSURE: {
                         // baroCnt++;
-                        textBaro.setStr("BARO value: " + content);
+                        textBaro.setStr("BARO: " + content);
                         // textBaroHz.setStr("BARO freq: " + freqStr(timestamp, baroCnt));
                         loggerBaro.write(timestamp + "," + content);
                         loggerBaro.newLine();

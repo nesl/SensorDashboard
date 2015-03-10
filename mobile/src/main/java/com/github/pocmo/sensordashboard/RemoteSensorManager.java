@@ -1,6 +1,8 @@
 package com.github.pocmo.sensordashboard;
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -15,6 +17,7 @@ import com.github.pocmo.sensordashboard.shared.DataMapKeys;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
@@ -37,12 +40,13 @@ public class RemoteSensorManager {
 
     private static RemoteSensorManager instance;
 
-    private Context context;
+    private final Context context;
     private ExecutorService executorService;
     private SparseArray<Sensor> sensorMapping;
     private ArrayList<Sensor> sensors;
     private SensorNames sensorNames;
     private GoogleApiClient googleApiClient;
+    private GoogleApiClient googleApiActivityClient;
 
     public static synchronized RemoteSensorManager getInstance(Context context) {
         if (instance == null) {
@@ -52,8 +56,8 @@ public class RemoteSensorManager {
         return instance;
     }
 
-    private RemoteSensorManager(Context context) {
-        this.context = context;
+    private RemoteSensorManager(Context _context) {
+        this.context = _context;
         this.sensorMapping = new SparseArray<Sensor>();
         this.sensors = new ArrayList<Sensor>();
         this.sensorNames = new SensorNames();
@@ -77,6 +81,32 @@ public class RemoteSensorManager {
                 })
                 .addApi(Wearable.API)
                 .build();
+
+        this.googleApiActivityClient = new GoogleApiClient.Builder(context)
+                .addApi(ActivityRecognition.API)
+                .addConnectionCallbacks(new ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(Bundle connectionHint) {
+                        Log.d(TAG, "onConnected activity recognition");
+                        Intent intent = new Intent(context, ActivityRecognitionService.class);
+                        PendingIntent mPendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+                        ActivityRecognition.ActivityRecognitionApi
+                                .requestActivityUpdates(googleApiActivityClient, 0, mPendingIntent);
+                    }
+                    @Override
+                    public void onConnectionSuspended(int cause) {
+                        Log.d(TAG, "onConnectionSuspended act: " + cause);
+                    }
+                })
+                .addOnConnectionFailedListener(new OnConnectionFailedListener() {
+                    @Override
+                    public void onConnectionFailed(ConnectionResult result) {
+                        Log.d(TAG, "onConnectionFailed act: " + result);
+                    }
+                })
+                .build();
+
 
         this.executorService = Executors.newCachedThreadPool();
     }
@@ -166,6 +196,7 @@ public class RemoteSensorManager {
                 controlMeasurementInBackground(ClientPaths.START_MEASUREMENT);
             }
         });
+        googleApiActivityClient.connect();
     }
 
     public void stopMeasurement() {
@@ -175,6 +206,7 @@ public class RemoteSensorManager {
                 controlMeasurementInBackground(ClientPaths.STOP_MEASUREMENT);
             }
         });
+        googleApiActivityClient.disconnect();
     }
 
     private void controlMeasurementInBackground(final String path) {

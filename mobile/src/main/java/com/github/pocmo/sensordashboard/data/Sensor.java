@@ -61,7 +61,6 @@ public class Sensor {
 
         if (newLimits) {
             Log.d(TAG, "New range for sensor " + id + ": " + minValue + " - " + maxValue);
-
             BusProvider.postOnMainThread(new SensorRangeEvent(this));
         }
     }
