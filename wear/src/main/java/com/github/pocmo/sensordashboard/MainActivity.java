@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
     }
 
     public void onBeep(View view) {
-        client.sendSensorData(0, 1, System.currentTimeMillis(), new float[]{random.nextFloat()});
+        client.sendSensorData(0, 1, 555, new float[]{random.nextFloat()});
     }
 
 }

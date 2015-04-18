@@ -26,7 +26,7 @@ public class ActivityRecognitionService extends IntentService {
         Log.d("ActivityRecognitionService", "new activity detected: " + content);
         Intent b = new Intent();
         b.setAction("nesl.wear.sensordata");
-        b.putExtra("t", -2);
+        b.putExtra("t", -5);
         b.putExtra("ts", res.getTime());
         b.putExtra("d", content);
         this.sendBroadcast(b);

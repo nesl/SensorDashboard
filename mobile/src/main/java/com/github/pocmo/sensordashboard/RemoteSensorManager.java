@@ -4,6 +4,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.media.browse.MediaBrowser;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -69,6 +71,8 @@ public class RemoteSensorManager {
                     @Override
                     public void onConnected(Bundle connectionHint) {
                         Log.d(TAG, "onConnected: " + connectionHint);
+
+                        wakeupHandler.sendEmptyMessage(0);
                     }
                     @Override
                     public void onConnectionSuspended(int cause) {
@@ -235,4 +239,17 @@ public class RemoteSensorManager {
             Log.w(TAG, "No connection possible");
         }
     }
+
+    private Handler wakeupHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    controlMeasurementInBackground(ClientPaths.BEACON);
+                }
+            });
+            sendEmptyMessageDelayed(0, 10000);
+        }
+    };
 }

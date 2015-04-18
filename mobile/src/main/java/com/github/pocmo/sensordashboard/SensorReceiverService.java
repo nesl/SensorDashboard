@@ -24,7 +24,7 @@ public class SensorReceiverService extends WearableListenerService {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        Log.i(TAG, "Started");
         sensorManager = RemoteSensorManager.getInstance(this);
     }
 
@@ -65,19 +65,13 @@ public class SensorReceiverService extends WearableListenerService {
         int accuracy = dataMap.getInt(DataMapKeys.ACCURACY);
         long timestamp = dataMap.getLong(DataMapKeys.TIMESTAMP);
         float[] values = dataMap.getFloatArray(DataMapKeys.VALUES);
-        // Log.d(TAG, "Received sensor data " + sensorType + " = " + Arrays.toString(values));
-
-        if (sensorType == 0) {
-            Toast.makeText(this, "empty sensor data received", Toast.LENGTH_SHORT).show();;
-        }
-        else {
-            Intent intent = new Intent();
-            intent.setAction("nesl.wear.sensordata");
-            intent.putExtra("t", sensorType);
-            intent.putExtra("ts", timestamp);
-            intent.putExtra("d",Arrays.toString(values));
-            this.sendBroadcast(intent);
-        }
+        Log.d(TAG, "Received sensor data " + sensorType + " = " + Arrays.toString(values));
+        Intent intent = new Intent();
+        intent.setAction("nesl.wear.sensordata");
+        intent.putExtra("t", sensorType);
+//            intent.putExtra("ts", timestamp);
+//            intent.putExtra("d",Arrays.toString(values));
+        this.sendBroadcast(intent);
 
 
         sensorManager.addSensorData(sensorType, accuracy, timestamp, values);

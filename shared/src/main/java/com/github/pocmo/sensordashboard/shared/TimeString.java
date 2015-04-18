@@ -1,4 +1,4 @@
-package com.github.pocmo.sensordashboard;
+package com.github.pocmo.sensordashboard.shared;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
