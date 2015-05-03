@@ -183,7 +183,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         textAcc     = TextViewBuf.createText(la, this, "ACC x:------,y:------,z:------");
         textGyro    = TextViewBuf.createText(la, this, "GYRO x:------,y:------,z:------");
         textStep     = TextViewBuf.createText(la, this, "StepCount: x:--");
-        textMag = TextViewBuf.createText(la, this, "BARO value: --");
+        textMag = TextViewBuf.createText(la, this, "MAG: --");
         textRot     = TextViewBuf.createText(la, this, "ROTATION VEC: --");
         TextViewBuf.createText(la, this, "");
 
@@ -366,7 +366,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 }
                 break;
                 case Sensor.TYPE_ROTATION_VECTOR: {
-                    textRot.setStr("MAG: " + content);
+                    textRot.setStr("ROTATION: " + content);
                     loggerRot.write(timestamp + "," + content);
                     loggerRot.newLine();
                     loggerRot.flush();
@@ -404,7 +404,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (!flag) {
+        if (!flag && event.timestamp != 0) {
             long elapsed = SystemClock.elapsedRealtimeNanos();
             Log.i(TAG, "event timestamp=" + event.timestamp + ", elapsed=" + elapsed + ", diff=" + (event.timestamp - elapsed));
             try {

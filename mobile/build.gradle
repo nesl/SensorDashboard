@@ -4,7 +4,6 @@ android {
     compileSdkVersion 21
     buildToolsVersion '22.0.1'
     defaultConfig {
-        applicationId 'edu.ucla.nesl.wearcontext'
         minSdkVersion 19
         targetSdkVersion 21
         versionCode 3

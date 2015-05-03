@@ -2,6 +2,7 @@ package com.github.pocmo.sensordashboard;
 
 import android.app.Notification;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -9,6 +10,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.Vibrator;
 import android.util.Log;
 
 import com.github.pocmo.sensordashboard.shared.TimeString;
@@ -62,6 +64,8 @@ public class SensorService extends Service implements SensorEventListener {
 
     private TimeString timeString = new TimeString();
 
+    private Vibrator v;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -72,6 +76,8 @@ public class SensorService extends Service implements SensorEventListener {
         builder.setContentTitle("Sensor Dashboard");
         builder.setContentText("Collecting sensor data..");
         builder.setSmallIcon(R.drawable.ic_launcher);
+
+        v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         startForeground(1, builder.build());
 
@@ -92,6 +98,8 @@ public class SensorService extends Service implements SensorEventListener {
 
     protected void startMeasurement() {
         Log.d(TAG, "start measurement in wear: SensorService");
+
+        v.vibrate(1000);
 
         client.sendSensorData(-1, 1, 111, new float[]{1.0f});
 
@@ -195,6 +203,8 @@ public class SensorService extends Service implements SensorEventListener {
     private void stopMeasurement() {
         client.sendSensorData(-2, 2, 2, new float[]{2.0f});
 
+        v.vibrate(200);
+
         mSensorManager.unregisterListener(this);
         mSensorManager = null;
 
@@ -243,7 +253,7 @@ public class SensorService extends Service implements SensorEventListener {
                 outputMag.flush();
             }
             else if (type == SENS_ROTATION_VECTOR) {
-                outputRot.write(timestamp + "," + event.values[0] + "," + event.values[1] + "," + event.values[2] + "," + event.values[3] + "\n");
+                outputRot.write(timestamp + "," + event.values[0] + "," + event.values[1] + "," + event.values[2] + "," + event.values[3] + "," + event.values[4] + "\n");
                 outputRot.flush();
             }
             else if (type == SENS_STEP_COUNTER) {
