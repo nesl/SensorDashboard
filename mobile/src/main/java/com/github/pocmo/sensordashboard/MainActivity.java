@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -46,22 +47,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private TextViewBuf textAcc;
     private TextViewBuf textGyro;
     private TextViewBuf textStep;
-    private TextViewBuf textBaro;
+    private TextViewBuf textMag;
+    private TextViewBuf textRot;
 
-//    private TextViewBuf textAccHz;
-//    private TextViewBuf textGyroHz;
-//    private TextViewBuf textStepHz;
-//    private TextViewBuf textBaroHz;
-
-    private TextViewBuf textAccWear;
-    private TextViewBuf textGyroWear;
-    private TextViewBuf textStepWear;
-    private TextViewBuf textHeartRateWear;
-
-//    private TextViewBuf textAccWearHz;
-//    private TextViewBuf textHeartRateWearHz;
-//    private TextViewBuf textStepWearHz;
-//    private TextViewBuf textGyroWearHz;
+    private TextViewBuf textWearStatus;
 
     private BufferedWriter loggerGps;
     private BufferedWriter loggerActivity;
@@ -69,27 +58,16 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private BufferedWriter loggerAcc;
     private BufferedWriter loggerGyro;
     private BufferedWriter loggerStep;
-    private BufferedWriter loggerBaro;
+    private BufferedWriter loggerMag;
+    private BufferedWriter loggerRot;
 
-//    private BufferedWriter loggerAccWear;
-//    private BufferedWriter loggerGyroWear;
-//    private BufferedWriter loggerStepWear;
-//    private BufferedWriter loggerHeartRateWear;
+    // log timestamp related information
+    private BufferedWriter loggerInfo;
 
     private TimeString timeString = new TimeString();
 
     private int gpsGCnt = 0;
     private int gpsNCnt = 0;
-
-//    private int baroCnt = 0;
-//    private int accCnt = 0;
-//    private int gyroCnt = 0;
-//    private int stepCnt = 0;
-//
-//    private int hearRateWearCnt = 0;
-//    private int accWearCnt = 0;
-//    private int gyroWearCnt = 0;
-//    private int stepWearCnt = 0;
 
     private SensorManager sensorManager;
     private LocationManager locationManager;
@@ -109,7 +87,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
 
         mThis = this;
-
 //        Intent intent = new Intent(MainActivity.this, SensorReceiverService.class);
 //        startService(intent);
 
@@ -121,22 +98,30 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_awesome_toolbar);
         setSupportActionBar(toolbar);
 
+        // calculate the different between real time and sensor timestamp
+        long elapsedRealTime = SystemClock.elapsedRealtime();
+        long current = System.currentTimeMillis();
+        Log.i(TAG, "elapsedRealTime=" + elapsedRealTime + ", current time=" + current + ", diff=" + (current - elapsedRealTime));
+
+
         // log file
-        String deviceNo = getDeviceNo();
-        String pathRoot = Environment.getExternalStorageDirectory() + "/wear_data/new/weardata_" + timeString.currentTimeForFile();
+        String pathRoot = Environment.getExternalStorageDirectory() + "/wear_data/weardata_" + timeString.currentTimeForFile();
         try {
+            // log time related information
+            loggerInfo  = new BufferedWriter(new FileWriter(pathRoot + ".phone.info"));
+
             loggerGps  = new BufferedWriter(new FileWriter(pathRoot + ".phone.gps"));
             loggerActivity  = new BufferedWriter(new FileWriter(pathRoot + ".phone.activity"));
 
             loggerAcc  = new BufferedWriter(new FileWriter(pathRoot + ".phone.acc"));
             loggerGyro = new BufferedWriter(new FileWriter(pathRoot + ".phone.gyro"));
             loggerStep  = new BufferedWriter(new FileWriter(pathRoot + ".phone.step"));
-            loggerBaro = new BufferedWriter(new FileWriter(pathRoot + ".phone.baro"));
+            loggerMag = new BufferedWriter(new FileWriter(pathRoot + ".phone.baro"));
+            loggerRot = new BufferedWriter(new FileWriter(pathRoot + ".phone.rot"));
 
-//            loggerAccWear  = new BufferedWriter(new FileWriter(pathRoot + ".wear.acc"));
-//            loggerGyroWear = new BufferedWriter(new FileWriter(pathRoot + ".wear.gyro"));
-//            loggerStepWear  = new BufferedWriter(new FileWriter(pathRoot + ".wear.step"));
-//            loggerHeartRateWear = new BufferedWriter(new FileWriter(pathRoot + ".wear.heartrate"));
+            loggerInfo.write("elapsedRealTime=" + elapsedRealTime + ", current time=" + current + ", diff=" + (current - elapsedRealTime));
+            loggerInfo.newLine();
+            loggerInfo.flush();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -164,11 +149,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 }
                 if (sensorType == -1) {
                     Toast.makeText(mThis, "wear data collection started", Toast.LENGTH_SHORT).show();
-                    textAccWear.setStr("Wear data collection started");
+                    textWearStatus.setStr("Wear data collection started");
                 }
                 else if (sensorType == -2) {
                     Toast.makeText(mThis, "wear data collection stopped", Toast.LENGTH_SHORT).show();
-                    textAccWear.setStr("Wear data collection stopped");
+                    textWearStatus.setStr("Wear data collection stopped");
                 }
                 else if (sensorType == -5) {
                     long timestamp = intent.getLongExtra("ts", 0);
@@ -196,24 +181,14 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         // sensor data from phone
         textAcc     = TextViewBuf.createText(la, this, "ACC x:------,y:------,z:------");
-        // textAccHz    = TextViewBuf.createText(la, this, "ACC freq: -- Hz");
         textGyro    = TextViewBuf.createText(la, this, "GYRO x:------,y:------,z:------");
-        // textGyroHz   = TextViewBuf.createText(la, this, "GYRO freq: -- Hz");
         textStep     = TextViewBuf.createText(la, this, "StepCount: x:--");
-        // textStepHz    = TextViewBuf.createText(la, this, "StepCount freq: --");
-        textBaro     = TextViewBuf.createText(la, this, "BARO value: --");
-        // textBaroHz   = TextViewBuf.createText(la, this, "BARO freq: -- Hz");
+        textMag = TextViewBuf.createText(la, this, "BARO value: --");
+        textRot     = TextViewBuf.createText(la, this, "ROTATION VEC: --");
         TextViewBuf.createText(la, this, "");
 
-        // sensor data from wearable device
-        textAccWear     = TextViewBuf.createText(la, this, "ACC_WEAR x:------,y:------,z:------");
-        // textAccWearHz    = TextViewBuf.createText(la, this, "ACC_W freq: -- Hz");
-        textGyroWear    = TextViewBuf.createText(la, this, "GYRO_WEAR x:------,y:------,z:------");
-        // textGyroWearHz   = TextViewBuf.createText(la, this, "GYRO_W freq: -- Hz");
-        textStepWear     = TextViewBuf.createText(la, this, "StepCount_Wear x:--");
-        // textStepWearHz    = TextViewBuf.createText(la, this, "StepCount_W freq: --");
-        textHeartRateWear     = TextViewBuf.createText(la, this, "HeartRate_Wear --");
-        // textHeartRateWearHz   = TextViewBuf.createText(la, this, "HeartRate_W freq: -- Hz");
+        // info from wearable device
+        textWearStatus = TextViewBuf.createText(la, this, "WEAR STATUS x:------,y:------,z:------");
         TextViewBuf.createText(la, this, "");
 
         frameUpdateHandler.sendEmptyMessage(0);
@@ -230,8 +205,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 remoteSensorManager.startMeasurement();
 
                 // Start data collection on phone
-                Sensor barometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-                sensorManager.registerListener(mSensorListener, barometerSensor, SensorManager.SENSOR_DELAY_FASTEST);
+                Sensor magSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+                sensorManager.registerListener(mSensorListener, magSensor, SensorManager.SENSOR_DELAY_FASTEST);
 
                 Sensor accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
                 sensorManager.registerListener(mSensorListener, accSensor, SensorManager.SENSOR_DELAY_FASTEST);
@@ -241,6 +216,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
                 Sensor stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
                 sensorManager.registerListener(mSensorListener, stepCounter, SensorManager.SENSOR_DELAY_FASTEST);
+
+                Sensor rotationVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+                sensorManager.registerListener(mSensorListener, rotationVector, SensorManager.SENSOR_DELAY_FASTEST);
 
                 // location update
                 if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
@@ -306,19 +284,15 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy called - closing all file logs...");
-        //sensorManager.unregisterListener(this);
         try {
-            loggerBaro.close();
+            loggerMag.close();
             loggerAcc.close();
             loggerGyro.close();
             loggerStep.close();
             loggerGps.close();
             loggerActivity.close();
-
-//            loggerHeartRateWear.close();
-//            loggerAccWear.close();
-//            loggerGyroWear.close();
-//            loggerStepWear.close();
+            loggerRot.close();
+            loggerInfo.close();
 
             // Release the wakelock
             wl.release();
@@ -327,27 +301,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             e.printStackTrace();
         }
     }
-
-    private String getDeviceNo() {
-        String fileName = Environment.getExternalStorageDirectory() + "/nesldev";
-        try {
-            FileInputStream fis = new FileInputStream(new File(fileName));
-            Scanner scanner = new Scanner(fis);
-            String firstLine = scanner.nextLine();
-            firstLine = firstLine.trim();
-            fis.close();
-            return firstLine;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "x";
-    }
-
-//    private String freqStr(long curSensorTimestamp, int count) {
-//        long dt = (curSensorTimestamp - startTime) / 1000000000;
-//        Log.d(TAG, "count="  + count + ",dt=" + dt);
-//        return String.format("%.2f", ((double)count) / (double) dt);
-//    }
 
     private Handler frameUpdateHandler = new Handler() {
         @Override
@@ -405,37 +358,36 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private void updateSensorData(int sensorType, String content, long timestamp) {
         try {
             switch (sensorType) {
-                case Sensor.TYPE_PRESSURE: {
-                    // baroCnt++;
-                    textBaro.setStr("BARO: " + content);
-                    // textBaroHz.setStr("BARO freq: " + freqStr(timestamp, baroCnt));
-                    loggerBaro.write(timestamp + "," + content);
-                    loggerBaro.newLine();
-                    loggerBaro.flush();
+                case Sensor.TYPE_MAGNETIC_FIELD: {
+                    textMag.setStr("MAG: " + content);
+                    loggerMag.write(timestamp + "," + content);
+                    loggerMag.newLine();
+                    loggerMag.flush();
+                }
+                break;
+                case Sensor.TYPE_ROTATION_VECTOR: {
+                    textRot.setStr("MAG: " + content);
+                    loggerRot.write(timestamp + "," + content);
+                    loggerRot.newLine();
+                    loggerRot.flush();
                 }
                 break;
                 case Sensor.TYPE_ACCELEROMETER: {
-                    // accCnt++;
                     textAcc.setStr("ACC " + content);
-                    // textAccHz.setStr("ACC freq: " + freqStr(timestamp, accCnt));
                     loggerAcc.write(timestamp + "," + content);
                     loggerAcc.newLine();
                     loggerAcc.flush();
                 }
                 break;
                 case Sensor.TYPE_GYROSCOPE: {
-                    // gyroCnt++;
                     textGyro.setStr("GYRO " + content);
-                    // textGyroHz.setStr("GYRO freq: " + freqStr(timestamp, gyroCnt));
                     loggerGyro.write(timestamp + "," + content);
                     loggerGyro.newLine();
                     loggerGyro.flush();
                 }
                 break;
                 case Sensor.TYPE_STEP_COUNTER: {
-                    // stepCnt++;
                     textStep.setStr("StepCounter: " + content);
-                    // textStepHz.setStr("StepCounter freq: " + freqStr(timestamp, stepCnt));
                     loggerStep.write(timestamp + "," + content);
                     loggerStep.newLine();
                     loggerStep.flush();
@@ -448,8 +400,22 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         }
     }
 
+    boolean flag = false;
+
     @Override
     public void onSensorChanged(SensorEvent event) {
+        if (!flag) {
+            long elapsed = SystemClock.elapsedRealtimeNanos();
+            Log.i(TAG, "event timestamp=" + event.timestamp + ", elapsed=" + elapsed + ", diff=" + (event.timestamp - elapsed));
+            try {
+                loggerInfo.write("event timestamp=" + event.timestamp + ", elapsed=" + elapsed + ", diff=" + (event.timestamp - elapsed));
+                loggerInfo.newLine();
+                loggerInfo.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            flag = true;
+        }
         updateSensorData(event.sensor.getType(), Arrays.toString(event.values), event.timestamp);
     }
 

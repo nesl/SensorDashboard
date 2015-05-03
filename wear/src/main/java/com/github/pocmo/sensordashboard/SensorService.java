@@ -58,7 +58,7 @@ public class SensorService extends Service implements SensorEventListener {
 
     private PowerManager.WakeLock wl;
 
-    private BufferedWriter outputAcc, outputGyr, outputStep, outputHR; //, outputMag;
+    private BufferedWriter outputAcc, outputGyr, outputStep, outputHR, outputMag, outputRot;
 
     private TimeString timeString = new TimeString();
 
@@ -102,7 +102,8 @@ public class SensorService extends Service implements SensorEventListener {
             outputGyr = new BufferedWriter(new FileWriter(prefix + ".wear.gyro"));
             outputStep = new BufferedWriter(new FileWriter(prefix + ".wear.step"));
             outputHR = new BufferedWriter(new FileWriter(prefix + ".wear.heartrate"));
-            // outputMag = new BufferedWriter(new FileWriter(prefix + ".wear.mag"));
+            outputMag = new BufferedWriter(new FileWriter(prefix + ".wear.mag"));
+            outputRot = new BufferedWriter(new FileWriter(prefix + ".wear.rot"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -117,8 +118,9 @@ public class SensorService extends Service implements SensorEventListener {
         Sensor accelerometerSensor = mSensorManager.getDefaultSensor(SENS_ACCELEROMETER);
         Sensor gyroscopeSensor = mSensorManager.getDefaultSensor(SENS_GYROSCOPE);
         mHeartrateSensor = mSensorManager.getDefaultSensor(SENS_HEARTRATE);
-        // Sensor magneticFieldSensor = mSensorManager.getDefaultSensor(SENS_MAGNETIC_FIELD);
+        Sensor magneticFieldSensor = mSensorManager.getDefaultSensor(SENS_MAGNETIC_FIELD);
         Sensor stepCounterSensor = mSensorManager.getDefaultSensor(SENS_STEP_COUNTER);
+        Sensor rotationVectorSensor = mSensorManager.getDefaultSensor(SENS_ROTATION_VECTOR);
 //        Sensor ambientTemperatureSensor = mSensorManager.getDefaultSensor(SENS_AMBIENT_TEMPERATURE);
 //        Sensor gameRotationVectorSensor = mSensorManager.getDefaultSensor(SENS_GAME_ROTATION_VECTOR);
 //        Sensor geomagneticSensor = mSensorManager.getDefaultSensor(SENS_GEOMAGNETIC);
@@ -131,7 +133,6 @@ public class SensorService extends Service implements SensorEventListener {
 //        Sensor pressureSensor = mSensorManager.getDefaultSensor(SENS_PRESSURE);
 //        Sensor proximitySensor = mSensorManager.getDefaultSensor(SENS_PROXIMITY);
 //        Sensor humiditySensor = mSensorManager.getDefaultSensor(SENS_HUMIDITY);
-//        Sensor rotationVectorSensor = mSensorManager.getDefaultSensor(SENS_ROTATION_VECTOR);
 //        Sensor significantMotionSensor = mSensorManager.getDefaultSensor(SENS_SIGNIFICANT_MOTION);
 //        Sensor stepDetectorSensor = mSensorManager.getDefaultSensor(SENS_STEP_DETECTOR);
 
@@ -173,11 +174,16 @@ public class SensorService extends Service implements SensorEventListener {
             } else {
                 Log.d(TAG, "No Heartrate Sensor found");
             }
-//            if (magneticFieldSensor != null) {
-//                mSensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_FASTEST);
-//            } else {
-//                Log.d(TAG, "No Magnetic Field Sensor found");
-//            }
+            if (magneticFieldSensor != null) {
+                mSensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_FASTEST);
+            } else {
+                Log.d(TAG, "No Magnetic Field Sensor found");
+            }
+            if (rotationVectorSensor != null) {
+                mSensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_FASTEST);
+            } else {
+                Log.d(TAG, "No Rotation Vector Sensor found");
+            }
             if (stepCounterSensor != null) {
                 mSensorManager.registerListener(this, stepCounterSensor, SensorManager.SENSOR_DELAY_FASTEST);
             } else {
@@ -205,8 +211,11 @@ public class SensorService extends Service implements SensorEventListener {
             outputHR.flush();
             outputHR.close();
 
-//            outputMag.flush();
-//            outputMag.close();
+            outputMag.flush();
+            outputMag.close();
+
+            outputRot.flush();
+            outputRot.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -229,10 +238,14 @@ public class SensorService extends Service implements SensorEventListener {
                 outputGyr.write(timestamp + "," + event.values[0] + "," + event.values[1] + "," + event.values[2] + "\n");
                 outputGyr.flush();
             }
-//            else if (type == SENS_MAGNETIC_FIELD) {
-//                outputMag.write(timestamp + "," + event.values[0] + "," + event.values[1] + "," + event.values[2] + "\n");
-//                outputMag.flush();
-//            }
+            else if (type == SENS_MAGNETIC_FIELD) {
+                outputMag.write(timestamp + "," + event.values[0] + "," + event.values[1] + "," + event.values[2] + "\n");
+                outputMag.flush();
+            }
+            else if (type == SENS_ROTATION_VECTOR) {
+                outputRot.write(timestamp + "," + event.values[0] + "," + event.values[1] + "," + event.values[2] + "," + event.values[3] + "\n");
+                outputRot.flush();
+            }
             else if (type == SENS_STEP_COUNTER) {
                 outputStep.write(timestamp + "," + event.values[0] + "\n");
                 outputStep.flush();
