@@ -112,7 +112,7 @@ public class SensorService extends Service implements SensorEventListener {
             outputHR = new BufferedWriter(new FileWriter(prefix + ".wear.heartrate"));
             outputMag = new BufferedWriter(new FileWriter(prefix + ".wear.mag"));
             outputRot = new BufferedWriter(new FileWriter(prefix + ".wear.rot"));
-            outputLAcc = new BufferedWriter(new FileWriter(prefix + ".wear.lacc"));
+            outputLAcc = new BufferedWriter(new FileWriter(prefix + ".wear.linearacc"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -275,7 +275,7 @@ public class SensorService extends Service implements SensorEventListener {
                 outputHR.flush();
             }
             else if (type == SENS_LINEAR_ACCELERATION) {
-                outputLAcc.write(timestamp + "," + event.values[0] + "\n");
+                outputLAcc.write(timestamp + "," + event.values[0] + "," + event.values[1] + "," + event.values[2] + "\n");
                 outputLAcc.flush();
             }
         }
