@@ -45,6 +45,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private TextViewBuf textActivity;
     private TextViewBuf textGps;
     private TextViewBuf textAcc;
+    private TextViewBuf textLAcc;
     private TextViewBuf textGyro;
     private TextViewBuf textStep;
     private TextViewBuf textMag;
@@ -56,6 +57,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private BufferedWriter loggerActivity;
 
     private BufferedWriter loggerAcc;
+    private BufferedWriter loggerLAcc;
     private BufferedWriter loggerGyro;
     private BufferedWriter loggerStep;
     private BufferedWriter loggerMag;
@@ -114,6 +116,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             loggerActivity  = new BufferedWriter(new FileWriter(pathRoot + ".phone.activity"));
 
             loggerAcc  = new BufferedWriter(new FileWriter(pathRoot + ".phone.acc"));
+            loggerLAcc  = new BufferedWriter(new FileWriter(pathRoot + ".phone.linearacc"));
             loggerGyro = new BufferedWriter(new FileWriter(pathRoot + ".phone.gyro"));
             loggerStep  = new BufferedWriter(new FileWriter(pathRoot + ".phone.step"));
             loggerMag = new BufferedWriter(new FileWriter(pathRoot + ".phone.baro"));
@@ -181,6 +184,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         // sensor data from phone
         textAcc     = TextViewBuf.createText(la, this, "ACC x:------,y:------,z:------");
+        textLAcc     = TextViewBuf.createText(la, this, "Linear ACC x:------,y:------,z:------");
         textGyro    = TextViewBuf.createText(la, this, "GYRO x:------,y:------,z:------");
         textStep     = TextViewBuf.createText(la, this, "StepCount: x:--");
         textMag = TextViewBuf.createText(la, this, "MAG: --");
@@ -210,6 +214,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
                 Sensor accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
                 sensorManager.registerListener(mSensorListener, accSensor, SensorManager.SENSOR_DELAY_FASTEST);
+
+                Sensor laccSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+                sensorManager.registerListener(mSensorListener, laccSensor, SensorManager.SENSOR_DELAY_FASTEST);
 
                 Sensor gyroSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
                 sensorManager.registerListener(mSensorListener, gyroSensor, SensorManager.SENSOR_DELAY_FASTEST);
@@ -287,6 +294,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         try {
             loggerMag.close();
             loggerAcc.close();
+            loggerLAcc.close();
             loggerGyro.close();
             loggerStep.close();
             loggerGps.close();
@@ -377,6 +385,13 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                     loggerAcc.write(timestamp + "," + content);
                     loggerAcc.newLine();
                     loggerAcc.flush();
+                }
+                break;
+                case Sensor.TYPE_LINEAR_ACCELERATION: {
+                    textLAcc.setStr("Linear ACC " + content);
+                    loggerLAcc.write(timestamp + "," + content);
+                    loggerLAcc.newLine();
+                    loggerLAcc.flush();
                 }
                 break;
                 case Sensor.TYPE_GYROSCOPE: {

@@ -60,7 +60,7 @@ public class SensorService extends Service implements SensorEventListener {
 
     private PowerManager.WakeLock wl;
 
-    private BufferedWriter outputAcc, outputGyr, outputStep, outputHR, outputMag, outputRot;
+    private BufferedWriter outputAcc, outputGyr, outputStep, outputHR, outputMag, outputRot, outputLAcc;
 
     private TimeString timeString = new TimeString();
 
@@ -112,6 +112,7 @@ public class SensorService extends Service implements SensorEventListener {
             outputHR = new BufferedWriter(new FileWriter(prefix + ".wear.heartrate"));
             outputMag = new BufferedWriter(new FileWriter(prefix + ".wear.mag"));
             outputRot = new BufferedWriter(new FileWriter(prefix + ".wear.rot"));
+            outputLAcc = new BufferedWriter(new FileWriter(prefix + ".wear.lacc"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -129,6 +130,7 @@ public class SensorService extends Service implements SensorEventListener {
         Sensor magneticFieldSensor = mSensorManager.getDefaultSensor(SENS_MAGNETIC_FIELD);
         Sensor stepCounterSensor = mSensorManager.getDefaultSensor(SENS_STEP_COUNTER);
         Sensor rotationVectorSensor = mSensorManager.getDefaultSensor(SENS_ROTATION_VECTOR);
+        Sensor linearAccelerationSensor = mSensorManager.getDefaultSensor(SENS_LINEAR_ACCELERATION);
 //        Sensor ambientTemperatureSensor = mSensorManager.getDefaultSensor(SENS_AMBIENT_TEMPERATURE);
 //        Sensor gameRotationVectorSensor = mSensorManager.getDefaultSensor(SENS_GAME_ROTATION_VECTOR);
 //        Sensor geomagneticSensor = mSensorManager.getDefaultSensor(SENS_GEOMAGNETIC);
@@ -136,7 +138,6 @@ public class SensorService extends Service implements SensorEventListener {
 //        Sensor gyroscopeUncalibratedSensor = mSensorManager.getDefaultSensor(SENS_GYROSCOPE_UNCALIBRATED);
 //        Sensor heartrateSamsungSensor = mSensorManager.getDefaultSensor(65562);
 //        Sensor lightSensor = mSensorManager.getDefaultSensor(SENS_LIGHT);
-//        Sensor linearAccelerationSensor = mSensorManager.getDefaultSensor(SENS_LINEAR_ACCELERATION);
 //        Sensor magneticFieldUncalibratedSensor = mSensorManager.getDefaultSensor(SENS_MAGNETIC_FIELD_UNCALIBRATED);
 //        Sensor pressureSensor = mSensorManager.getDefaultSensor(SENS_PRESSURE);
 //        Sensor proximitySensor = mSensorManager.getDefaultSensor(SENS_PROXIMITY);
@@ -197,6 +198,12 @@ public class SensorService extends Service implements SensorEventListener {
             } else {
                 Log.d(TAG, "No Step Counter Sensor found");
             }
+            if (linearAccelerationSensor != null) {
+                mSensorManager.registerListener(this, linearAccelerationSensor, SensorManager.SENSOR_DELAY_FASTEST);
+            }
+            else {
+                Log.d(TAG, "No linear acc Sensor found");
+            }
         }
     }
 
@@ -226,6 +233,9 @@ public class SensorService extends Service implements SensorEventListener {
 
             outputRot.flush();
             outputRot.close();
+
+            outputLAcc.flush();
+            outputLAcc.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -263,6 +273,10 @@ public class SensorService extends Service implements SensorEventListener {
             else if (type == SENS_HEARTRATE) {
                 outputHR.write(timestamp + "," + event.values[0] + "\n");
                 outputHR.flush();
+            }
+            else if (type == SENS_LINEAR_ACCELERATION) {
+                outputLAcc.write(timestamp + "," + event.values[0] + "\n");
+                outputLAcc.flush();
             }
         }
         catch (Exception e) {
